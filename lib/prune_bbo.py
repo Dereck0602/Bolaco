@@ -5,8 +5,7 @@ import torch
 import random
 
 import torch.nn as nn
-# from .layerwrapper import WrappedGPT
-from .layerwrapper2 import WrappedGPT
+from .layerwrapper import WrappedGPT
 from .data import get_loaders
 from transformers import AutoConfig
 
