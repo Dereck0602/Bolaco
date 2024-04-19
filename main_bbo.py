@@ -22,7 +22,6 @@ print('# of gpus: ', torch.cuda.device_count())
 
 def get_llm(model_name, cache_dir="llm_weights"):
     model = AutoModelForCausalLM.from_pretrained(
-        # model = LlamaForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16,
         cache_dir=cache_dir,
@@ -40,7 +39,6 @@ def main():
     parser.add_argument('--seed', type=int, default=0, help='Seed for sampling the calibration data.')
     parser.add_argument('--nsamples', type=int, default=128, help='Number of calibration samples.')
     parser.add_argument('--remain_ratio', type=float, default=0, help='Sparsity level')
-    parser.add_argument("--prune_method", type=str, choices=["magnitude", "wanda", "sparsegpt", "lord", "SVD"])
     parser.add_argument("--cache_dir", default="llm_weights", type=str)
     parser.add_argument('--save', type=str, default=None, help='Path to save results.')
     parser.add_argument('--save_model', action='store_true', help='if save model')
@@ -62,36 +60,51 @@ def main():
         device = model.hf_device_map["lm_head"]
     print("use device ", device)
 
-    # layer_lst = lord(args, model, tokenizer, device)
-    # torch.save(layer_lst, './output/llama2_13b_parameters.pth')
+    layer_lst = lord(args, model, tokenizer, device)
+    torch.save(layer_lst, './output/llama2_7b_1024_avg32_parameters.pth')
 
-    layer_lst = torch.load('./output/llama2_7b_1024_avg32_parameters.pth')
+    #layer_lst = torch.load('./output/llama2_7b_1024_avg32_parameters.pth')
 
     def sample_condition(config):
         s = 0
-        s += 2.6875 * (config[f'gate_ratio'] + config[f'up_ratio'] + config[f'down_ratio']) + config[f'qk_ratio'] * 2 + 1 + config[f'o_ratio']
-        # for i in range(4):
-        #     s += (2.6875 * (config[f'gate_ratio_{i}'] + config[f'up_ratio_{i}'] + config[f'down_ratio_{i}']) + config[f'qk_ratio_{i}'] * 2 + 1 + config[f'o_ratio_{i}']) * 0.25
-        # print(s)
-        if round(s, 4) > args.remain_ratio * 12.0625:
-            return False
-        if round(s, 4) < (args.remain_ratio - 0.1) * 12.0625:
-            return False
+        if '7b' in model_name:
+            s += 2.6875 * (config[f'gate_ratio'] + config[f'up_ratio'] + config[f'down_ratio']) + config[f'qk_ratio'] * 2 + 1 + config[f'o_ratio']
+            # for i in range(4):
+            #     s += (2.6875 * (config[f'gate_ratio_{i}'] + config[f'up_ratio_{i}'] + config[f'down_ratio_{i}']) + config[f'qk_ratio_{i}'] * 2 + 1 + config[f'o_ratio_{i}']) * 0.25
+            # print(s)
+            if round(s, 4) > args.remain_ratio * 12.0625:
+                return False
+            if round(s, 4) < (args.remain_ratio - 0.1) * 12.0625:
+                return False
+        if '13b' in model_name:
+            s += 2.7 * (config[f'gate_ratio'] + config[f'up_ratio'] + config[f'down_ratio']) + config[f'qk_ratio'] * 2 + 1 + config[f'o_ratio']
+            # for i in range(4):
+            #     s += (2.7 * (config[f'gate_ratio_{i}'] + config[f'up_ratio_{i}'] + config[f'down_ratio_{i}']) + config[f'qk_ratio_{i}'] * 2 + 1 + config[f'o_ratio_{i}']) * 0.25
+            # print(s)
+            if round(s, 4) > args.remain_ratio * 12.1:
+                return False
+            if round(s, 4) < (args.remain_ratio - 0.1) * 12.1:
+                return False
         return True
-# round(s, 4)
-    ratios = [0.25, 0.5, 0.5, 0.5, 0.5]
-    # ratios = [0.4,0.6,0.6,0.6,0.6]
-    # ratios = [0.48880967584856977, 0.7309212214923659, 0.7387689406682929, 1.0, 0.8412028617288818]
-    # ratios = [0.4024277204916222, 0.8297201219329535, 0.7397247525244415, 1.0, 0.8683297107214027]
+
     space = sp.ConditionedSpace()
     variables = []
-    # for i in range(4):
-    x1 = sp.Real(f"qk_ratio", 0.2, 1.001, default_value=ratios[0])
-    # x2 = sp.Real(f"v_ratio_{i}", 0.2, 1.0, default_value=1.0)
-    x2 = sp.Real(f"o_ratio", 0.2, 1.001, default_value=ratios[1])
-    x3 = sp.Real(f"gate_ratio", 0.2, 1.001, default_value=ratios[2])
-    x4 = sp.Real(f"up_ratio", 0.2, 1.001, default_value=ratios[3])
-    x5 = sp.Real(f"down_ratio", 0.2, 1.001, default_value=ratios[4])
+    if args.remain_ratio==0.8:
+        ratios = [0.5, 0.5, 0.8, 0.8, 0.8]
+        # for i in range(4):
+        x1 = sp.Real(f"qk_ratio", 0.2, 1.001, default_value=ratios[0])
+        x2 = sp.Real(f"o_ratio", 0.2, 1.001, default_value=ratios[1])
+        x3 = sp.Real(f"gate_ratio", 0.2, 1.001, default_value=ratios[2])
+        x4 = sp.Real(f"up_ratio", 0.2, 1.001, default_value=ratios[3])
+        x5 = sp.Real(f"down_ratio", 0.2, 1.001, default_value=ratios[4])
+    if args.remain_ratio==0.7:
+        ratios = [0.25, 0.5, 0.5, 0.5, 0.5]
+        # for i in range(4):
+        x1 = sp.Real(f"qk_ratio", 0.2, 0.8, default_value=ratios[0])
+        x2 = sp.Real(f"o_ratio", 0.2, 0.8, default_value=ratios[1])
+        x3 = sp.Real(f"gate_ratio", 0.2, 0.8, default_value=ratios[2])
+        x4 = sp.Real(f"up_ratio", 0.2, 0.8, default_value=ratios[3])
+        x5 = sp.Real(f"down_ratio", 0.2, 0.8, default_value=ratios[4])
     variables += [x1, x2, x3, x4, x5]
     print(variables)
     space.add_variables(variables)
@@ -106,7 +119,6 @@ def main():
         # for i in range(4):
         #     ratios += [config[j] for j in [f"qk_ratio_{i}", f"o_ratio_{i}", f"gate_ratio_{i}", f"up_ratio_{i}", f"down_ratio_{i}"]]
         for i in range(len(ratios)):
-            # if 1 > ratios[i] >= 0.999:
             if ratios[i] > 1.0:
                 ratios[i] = 1.0
         prune_lord(prune_model, tokenizer, layer_lst, ratios, device)
@@ -126,7 +138,7 @@ def main():
         surrogate_type='gp',
         # acq_optimizer_type='random_scipy',
         acq_optimizer_type='local_random',
-        max_runs=60,
+        max_runs=50,
         task_id='lowrank',
     )
 
@@ -143,7 +155,6 @@ def main():
 
     ratio_dict = lst[0].config.get_dictionary()
     for i in ratio_dict:
-        # if 0.99 <= ratio_dict[i] < 1:
         if ratio_dict[i] > 1:
             ratio_dict[i] = 1.0
     ratios = [ratio_dict[j] for j in ["qk_ratio", "o_ratio", "gate_ratio", "up_ratio", "down_ratio"]]
