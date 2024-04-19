@@ -17,7 +17,7 @@ class WrappedGPT:
         self.scaler_row = torch.zeros((self.columns), device=self.dev)
         self.out = torch.zeros((self.rows, 2048), device=self.dev)
         self.inp = torch.zeros((2048, self.columns), device=self.dev)
-        self.out_cov = torch.zeros((self.rows, self.rows), device=self.dev)  # 记录之前sample的所有cov
+        self.out_cov = torch.zeros((self.rows, self.rows), device=self.dev)  
         self.out_mean = torch.zeros((self.rows, 1), device=self.dev)
 
         self.out_avgcov = torch.zeros((self.rows, self.rows), device=self.dev)
@@ -53,7 +53,7 @@ class WrappedGPT:
         self.out_mean = mean
         self.out_cov = cov
         self.nsamples += tmp
-        if self.nsamples % (1024 * tmp) == 0:
+        if self.nsamples % (32 * tmp) == 0:
             tmp = 1
             self.out_avgcov = (self.avg_step * self.out_avgcov + tmp * self.out_cov) / (self.avg_step + tmp)
             self.out_avgmean = (self.avg_step * self.out_avgmean + tmp * self.out_mean) / (self.avg_step + tmp)
