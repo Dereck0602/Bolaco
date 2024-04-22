@@ -19,3 +19,7 @@ bash run.sh
 ```
 bash run_posttrain.sh
 ```
+
+
+## Model checkpoint
+coming soon ...
