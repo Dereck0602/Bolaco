@@ -22,6 +22,4 @@ bash run_posttrain.sh
 
 
 ## Model checkpoint
-```
-https://huggingface.co/baldwin6/Bolaco
-```
+You can download the checkpoints for the model from [here](https://huggingface.co/baldwin6/Bolaco)
