@@ -22,4 +22,6 @@ bash run_posttrain.sh
 
 
 ## Model checkpoint
-coming soon ...
+```
+https://huggingface.co/baldwin6/Bolaco
+```
