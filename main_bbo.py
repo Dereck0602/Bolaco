@@ -98,7 +98,7 @@ def main():
         x4 = sp.Real(f"up_ratio", 0.2, 1.001, default_value=ratios[3])
         x5 = sp.Real(f"down_ratio", 0.2, 1.001, default_value=ratios[4])
     if args.remain_ratio==0.7:
-        ratios = [0.25, 0.5, 0.5, 0.5, 0.5]
+        ratios = [0.5, 0.5, 0.7, 0.7, 0.7]
         # for i in range(4):
         x1 = sp.Real(f"qk_ratio", 0.2, 0.8, default_value=ratios[0])
         x2 = sp.Real(f"o_ratio", 0.2, 0.8, default_value=ratios[1])
