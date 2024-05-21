@@ -2,7 +2,7 @@
 <h1>Bolaco</h1>
 </div>
 
-This repo contains the code for "Feature-based Low-Rank Compression of Large Language Models via Bayesian Optimization"
+This repo contains the code for "Feature-based Low-Rank Compression of Large Language Models via Bayesian Optimization"([https://arxiv.org/abs/2405.10616](https://arxiv.org/abs/2405.10616))
 
 ## Quick start
 ### Installation
