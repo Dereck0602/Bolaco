@@ -110,25 +110,25 @@ def main():
     layer_lst = torch.load('path/to/pca/result')
 
     def sample_condition(config):
-        '''
         s = 0
-        #s += 2.6875 * (config[f'gate_ratio'] + config[f'up_ratio'] + config[f'down_ratio']) + config[f'qk_ratio'] * 2 + 1 + config[f'o_ratio']
-        for i in range(4):
-            s += (2.6875 * (config[f'gate_ratio_{i}'] + config[f'up_ratio_{i}'] + config[f'down_ratio_{i}']) + config[f'qk_ratio_{i}'] * 2 + 1 + config[f'o_ratio_{i}']) * 0.25
-        if s > args.remain_ratio * 12.0625:
-            return False
-        if s < (args.remain_ratio - 0.1) * 12.0625:
-            return False
-        
-        '''
-        s = 0
-        #s += 2.7 * (config[f'gate_ratio'] + config[f'up_ratio'] + config[f'down_ratio']) + config[f'qk_ratio'] * 2 + 1 + config[f'o_ratio']
-        for i in range(4):
-            s += (2.7 * (config[f'gate_ratio_{i}'] + config[f'up_ratio_{i}'] + config[f'down_ratio_{i}']) + config[f'qk_ratio_{i}'] * 2 + 1 + config[f'o_ratio_{i}']) * 0.25
-        if round(s,4) > args.remain_ratio * 12.1:
-            return False
-        if round(s,4) < (args.remain_ratio - 0.1) * 12.1:
-            return False
+        if '7b' in model_name:
+            s += 2.6875 * (config[f'gate_ratio'] + config[f'up_ratio'] + config[f'down_ratio']) + config[f'qk_ratio'] * 2 + 1 + config[f'o_ratio']
+            # for i in range(4):
+            #     s += (2.6875 * (config[f'gate_ratio_{i}'] + config[f'up_ratio_{i}'] + config[f'down_ratio_{i}']) + config[f'qk_ratio_{i}'] * 2 + 1 + config[f'o_ratio_{i}']) * 0.25
+            # print(s)
+            if round(s, 4) > args.remain_ratio * 12.0625:
+                return False
+            if round(s, 4) < (args.remain_ratio - 0.1) * 12.0625:
+                return False
+        if '13b' in model_name:
+            s += 2.7 * (config[f'gate_ratio'] + config[f'up_ratio'] + config[f'down_ratio']) + config[f'qk_ratio'] * 2 + 1 + config[f'o_ratio']
+            # for i in range(4):
+            #     s += (2.7 * (config[f'gate_ratio_{i}'] + config[f'up_ratio_{i}'] + config[f'down_ratio_{i}']) + config[f'qk_ratio_{i}'] * 2 + 1 + config[f'o_ratio_{i}']) * 0.25
+            # print(s)
+            if round(s, 4) > args.remain_ratio * 12.1:
+                return False
+            if round(s, 4) < (args.remain_ratio - 0.1) * 12.1:
+                return False
         
         return True
 
