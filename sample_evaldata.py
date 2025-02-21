@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from lib.prune_bbo import lord, prune_lord
 from openbox import Optimizer, space as sp
-from lib.datasets.ppl_dataset import get_loaders
+from lib.ppl_dataset import get_loaders
 
 torch.set_printoptions(threshold=torch.inf)
 print('torch', version('torch'))
