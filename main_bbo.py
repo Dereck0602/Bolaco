@@ -63,7 +63,7 @@ def main():
     layer_lst = lord(args, model, tokenizer, device)
     torch.save(layer_lst, './output/llama2_7b_1024_avg32_parameters.pth')
 
-    #layer_lst = torch.load('./output/llama2_7b_1024_avg32_parameters.pth')
+    layer_lst = torch.load('./output/llama2_7b_1024_avg32_parameters.pth')
 
     def sample_condition(config):
         s = 0
@@ -100,17 +100,17 @@ def main():
     if args.remain_ratio==0.7:
         ratios = [0.5, 0.5, 0.7, 0.7, 0.7]
         # for i in range(4):
-        x1 = sp.Real(f"qk_ratio", 0.2, 0.8, default_value=ratios[0])
-        x2 = sp.Real(f"o_ratio", 0.2, 0.8, default_value=ratios[1])
-        x3 = sp.Real(f"gate_ratio", 0.2, 0.8, default_value=ratios[2])
-        x4 = sp.Real(f"up_ratio", 0.2, 0.8, default_value=ratios[3])
-        x5 = sp.Real(f"down_ratio", 0.2, 0.8, default_value=ratios[4])
+        x1 = sp.Real(f"qk_ratio", 0.2, 1.001, default_value=ratios[0])
+        x2 = sp.Real(f"o_ratio", 0.2, 1.001, default_value=ratios[1])
+        x3 = sp.Real(f"gate_ratio", 0.2, 1.001, default_value=ratios[2])
+        x4 = sp.Real(f"up_ratio", 0.2, 1.001, default_value=ratios[3])
+        x5 = sp.Real(f"down_ratio", 0.2, 1.001, default_value=ratios[4])
     variables += [x1, x2, x3, x4, x5]
     print(variables)
     space.add_variables(variables)
     space.set_sample_condition(sample_condition)
 
-    unprune_ppl, logits = PPLMetric(model, tokenizer, ['wikitext2'], 4096, 1, device='cuda', out_logits=True)
+    unprune_ppl, logits = PPLMetric(model, tokenizer, ['wikipedia'], 4096, 1, device='cuda', out_logits=True)
 
     def ppl_metric(config, model=model):
         prune_model = copy.deepcopy(model)
@@ -125,7 +125,7 @@ def main():
         prune_model.to(device)
         prune_model.eval()
         # ppl_test = eval_ppl(prune_model, tokenizer, device)
-        ppl_test = PPLMetric(prune_model, tokenizer, ['wikitext2'], 4096, 1, device='cuda', target=logits)['wikitext2']
+        ppl_test = PPLMetric(prune_model, tokenizer, ['wikipedia'], 4096, 1, device='cuda', target=logits)['wikipedia']
         # ppl_test = PPLMetric(prune_model, tokenizer, ['wikitext2'], 4096, batch_size=1, device="cuda")['wikitext2']
         result = dict()
         result['objectives'] = [ppl_test, ]
@@ -174,19 +174,18 @@ def main():
     # ppl_test = PPLMetric(model, tokenizer, ['wikitext2'], 4096, batch_size=1, device="cuda")
     print(f"wikitext perplexity {ppl_test}")
     # print(f"wikitext perplexity(2048) {ppl}")
-    ppl = PPLMetric(model, tokenizer, ['wikitext2', 'c4', 'ptb'], 4096, batch_size=1, device="cuda")
+    # ppl = PPLMetric(model, tokenizer, ['wikitext2'], 4096, batch_size=1, device="cuda")
     # ppl = PPLMetric(model, tokenizer, ['wikitext2'], 4096, batch_size=1, device="cuda")
     # ppl = PPLMetric(model, tokenizer, ['ptb'], 256, batch_size=4, device="cuda")
 
-
-    # accelerate = False
-    # task_list = ["boolq", "hellaswag", "winogrande", "arc_easy", "arc_challenge", "openbookqa", "piqa"]
-    # # task_list = ["hellaswag", "arc_challenge", "boolq"]
-    # num_shot = 0
-    # results = eval_zero_shot(args.model, model, tokenizer, task_list, num_shot, accelerate)
-    # print("********************************")
-    # print("zero_shot evaluation results")
-    # print(results)
+    accelerate = False
+    task_list = ["boolq", "hellaswag", "winogrande", "arc_easy", "arc_challenge", "openbookqa", "piqa"]
+    # task_list = ["hellaswag", "arc_challenge", "boolq"]
+    num_shot = 0
+    results = eval_zero_shot(args.model, model, tokenizer, task_list, num_shot, accelerate)
+    print("********************************")
+    print("zero_shot evaluation results")
+    print(results)
 
     if args.save_model:
         model.half()
