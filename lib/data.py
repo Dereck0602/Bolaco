@@ -19,8 +19,8 @@ def get_wikitext2(nsamples, seed, seqlen, tokenizer):
     # traindata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train')
     # testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test')
     
-    traindata = load_dataset("parquet", data_files={"train":'./wikitext-2-raw-v1/train-00000-of-00001-6506f33274247c0c.parquet'}, split='train')
-    testdata = load_dataset("parquet", data_files={"test":'./wikitext-2-raw-v1/test-00000-of-00001-7231805191546d57.parquet'}, split='test')
+    traindata = load_dataset("parquet", data_files={"train": '/public/home/ljt/xy/prune_llm/Bolaco/wikitext-2-raw-v1/train-00000-of-00001.parquet'}, split='train')
+    testdata = load_dataset("parquet", data_files={"test": '/public/home/ljt/xy/prune_llm/Bolaco/wikitext-2-raw-v1/test-00000-of-00001.parquet'}, split='test')
     # print(traindata)
     
     # Encode datasets
@@ -46,8 +46,8 @@ def get_c4(nsamples, seed, seqlen, tokenizer):
     # traindata = load_dataset('./c4', 'allenai--c4', data_files={'train': 'en/c4-train.00000-of-01024.json.gz'}, split='train')
     # valdata = load_dataset('./c4', 'allenai--c4', data_files={'validation': 'en/c4-validation.00000-of-00008.json.gz'}, split='validation')
     # 修改train和valdata为本地
-    traindata = load_dataset('json', data_files = {'train': './c4/c4-train.00000-of-01024.json'}, split='train')
-    valdata = load_dataset('json', data_files = {'validation': './c4/c4-validation.00000-of-00008.json'}, split='validation')
+    traindata = load_dataset('json', data_files = {'train': '/public/home/ljt/xy/prune_llm/Bolaco/c4/c4-train.00000-of-01024.json'}, split='train')
+    valdata = load_dataset('json', data_files = {'validation': '/public/home/ljt/xy/prune_llm/Bolaco/c4/c4-validation.00000-of-00008.json'}, split='validation')
 
     # Generate samples from training set
     random.seed(seed)
@@ -71,6 +71,43 @@ def get_c4(nsamples, seed, seqlen, tokenizer):
     valenc = TokenizerWrapper(valenc)
     return trainloader, valenc
 
+
+def get_alpaca(nsamples, seed, seqlen, tokenizer):
+    traindata = load_dataset('parquet', data_files = {'train': '/public/home/ljt/xy/prune_llm/No_loss_pruning/alpaca/alpaca.parquet'}, split='train')
+
+    trainenc = tokenizer(" ".join(traindata['content']), return_tensors='pt')
+
+    # Generate samples from training set
+    random.seed(seed)
+    trainloader = []
+    for _ in range(nsamples):
+        i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
+        j = i + seqlen
+        inp = trainenc.input_ids[:, i:j]
+        tar = inp.clone()
+        tar[:, :-1] = -100
+        trainloader.append((inp, tar))
+    return trainloader, _
+
+def get_dclm(nsamples, seed, seqlen, tokenizer):
+    traindata = load_dataset('json', data_files = {'train': '/public/home/ljt/xy/prune_llm/dclm-baseline-1.0/shard_00000000_processed.jsonl'}, split='train')
+    # Generate samples from training set
+    random.seed(seed)
+    trainloader = []
+    for _ in range(nsamples):
+        while True:
+            i = random.randint(0, len(traindata) - 1)
+            trainenc = tokenizer(traindata[i]['text'], return_tensors='pt')
+            if trainenc.input_ids.shape[1] > seqlen:
+                break
+        i = random.randint(0, trainenc.input_ids.shape[1] - seqlen - 1)
+        j = i + seqlen
+        inp = trainenc.input_ids[:, i:j]
+        tar = inp.clone()
+        tar[:, :-1] = -100
+        trainloader.append((inp, tar))
+
+    return trainloader, _
 
 def get_ptb(nsamples, seed, seqlen, tokenizer):
 
@@ -125,8 +162,12 @@ def get_loaders(name, nsamples=128, seed=0, seqlen=2048, tokenizer=None):
         return get_wikitext2(nsamples, seed, seqlen, tokenizer)
     elif "c4" in name:
         return get_c4(nsamples, seed, seqlen, tokenizer)
+    elif "alpaca" in name:
+        return get_alpaca(nsamples, seed, seqlen, tokenizer)
     elif "bookcorpus" in name:
         return get_bookcorpus(nsamples, seed, seqlen, tokenizer)
     elif "ptb" in name:
         return get_ptb(nsamples, seed, seqlen, tokenizer)
+    elif "dclm" in name:
+        return get_dclm(nsamples, seed, seqlen, tokenizer)
 

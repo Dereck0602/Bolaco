@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 
 from .ppl_test import get_loaders
+# from .ppl_dataset import get_loaders
 
 
 def PPLMetric(model, tokenizer, datasets, seq_len=128, batch_size=1, device="cuda", out_logits=False, target=None):
